@@ -1,0 +1,69 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+Some notes:
+
+The data used for this analysis are described at https://www.huduser.gov/portal/datasets/hads/HADS_doc.pdf and were originally obtained from the USA Housing Affordability Data System (HADS) statistics at https://www.huduser.gov/portal/datasets/hads/hads.html (specifically from the years 2005-2013).
+
+At https://catalog.data.gov/dataset?publisher=US%20Department%20of%20Housing%20and%20Urban%20Development one can find a link to the above website through the yellow CSV tag below the paragraph describing the "Housing Affordability Data System (HADS)" data.
+
+
+
+There is no explicitly given guarantee that the provided data samples are independent; as such, the samples are treated as simple random but not independent for purposes of statistical analysis.
+
+Hypotheses:
+Null - There has been no change in the distribution of housing units with respect to census regions over the five years in the nine-year span examined.
+Alternative - There has been a change in the above-described distribution.
+
+The above hypotheses are to be tested at 99% confidence; the practical consequences of this examination depend on the outcome - if the verdict is to fail to reject the null hypothesis, then one might be able to infer that the present housing program's design suffices to cover the majority of US citizens' relevant needs where they arise. Conversely, rejection of the null hypothesis may imply a deficiency in the program's form throughout its life.
+Both hypotheses are thoroughly influenced by additional variables besides the housing program's functionality, however; things like migratory tendencies of U.S. populations, and birth/death rates, may account for significant portions of the change.
+
+```{r}
+# Change the below-declared paths as needed before executing this script.
+
+# This declares the set of included "standard R" libraries, such as tidyverse and ggplot.
+source(file="C:\\Users\\Elliott\\Documents\\CodingProjects\\R\\includes.R")
+
+# UtilityFunctions.R provides "collideListsIntoDataFrame" so that the set of raw data can be more easily assembled from CSV form (see GitHub repository https://github.com/ElliottThomasStaude/RLibrary to find this script).
+source(file="C:\\Users\\Elliott\\Documents\\CodingProjects\\R\\UtilityFunctions.R")
+
+# Central location for raw data; ensure that the CSV/TXT files associated are included in this location.
+setwd("C:\\Users\\Elliott\\Documents\\DataScienceFiles\\YearOverYearUSAFinancialData")
+
+csv2005 <- read_csv("thads2005.txt")
+csv2007 <- read_csv("thads2007.txt")
+csv2009 <- read_csv("thads2009.txt")
+csv2011 <- read_csv("thads2011.txt")
+csv2013 <- read_csv("thads2013n.txt")
+csv2005[["YEAR"]] <- 2005
+csv2007[["YEAR"]] <- 2007
+csv2009[["YEAR"]] <- 2009
+csv2011[["YEAR"]] <- 2011
+csv2013[["YEAR"]] <- 2013
+
+csvDataList <- list(csv2005, csv2007, csv2009, csv2011, csv2013)
+
+organizedValues <- collideListsIntoDataFrame(csvDataList)
+
+
+
+
+
+organizedValuesGroupByYear <- group_by(organizedValues, YEAR, REGION)
+
+regionSummary <- summarize(organizedValuesGroupByYear, regionCount=length(REGION))
+regionSummary2005 <- filter(regionSummary[order(regionSummary$REGION),], YEAR==2005)$regionCount
+regionSummary2007 <- filter(regionSummary[order(regionSummary$REGION),], YEAR==2007)$regionCount
+regionSummary2009 <- filter(regionSummary[order(regionSummary$REGION),], YEAR==2009)$regionCount
+regionSummary2011 <- filter(regionSummary[order(regionSummary$REGION),], YEAR==2011)$regionCount
+regionSummary2013 <- filter(regionSummary[order(regionSummary$REGION),], YEAR==2013)$regionCount
+
+# CrossTable provides chi-square and p values for hypothesis testing.
+setMatrix <- matrix(data=c(regionSummary2005, regionSummary2007, regionSummary2009, regionSummary2011, regionSummary2013), nrow = 5, ncol = 4, byrow = TRUE)
+CrossTable(setMatrix, expected = TRUE)
+# 1 = Northeast, 2 = Midwest, 3 = South, 4 = West
+```
+
+
